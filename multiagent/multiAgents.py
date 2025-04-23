@@ -170,9 +170,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         if(agentIndex < totalAgents-1):  
           agentIndex = agentIndex + 1
     
-        totalAgents = gameState.getNumAgents() 
-
-        # Decrement depth if needed
+        # Decrement depth if needed # This is where the problem lies...
         if(agentIndex == totalAgents-1):
             # Reset once all ghosts have been checked
             agentIndex = 0
@@ -270,4 +268,3 @@ def betterEvaluationFunction(currentGameState):
 
 # Abbreviation
 better = betterEvaluationFunction
-
