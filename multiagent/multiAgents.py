@@ -136,11 +136,12 @@ class MinimaxAgent(MultiAgentSearchAgent):
         #Initialize infinity
         v = float('inf')
         totalAgents = gameState.getNumAgents()
-        # Get a list of all actions
+        # Get a list of all actions (for this state and current agent)
         actions = gameState.getLegalActions(agentIndex)
         
         for action in actions:
-            # Get the successor state...
+            # Get the state this action would generate
+            # Alongside the agents and depth as appropriate for this next layer
             # Check the next agent
             nextAgent = (agentIndex + 1) % totalAgents
             # Is the next agent pacman, then decrement the depth (we just cycled a branch)
@@ -149,8 +150,8 @@ class MinimaxAgent(MultiAgentSearchAgent):
             else:
                 #Else the depth is unchanged
                 nextDepth = depth
-            #Check this next states value
-            newState = gameState.generateSuccessor(agentIndex, action) #Current state, changed from nextAgent
+            #Check this next states value (from the possible action) in context of the next nodes calls, we are traversing across the tree, until we hit the end (full agents) and then lowering depth.
+            newState = gameState.generateSuccessor(agentIndex, action) 
             v = min(v, self.value(newState, nextAgent, nextDepth))
         return v 
     
@@ -159,12 +160,11 @@ class MinimaxAgent(MultiAgentSearchAgent):
         #Initialize infinity
         v = float('-inf')
         totalAgents = gameState.getNumAgents()
-        # Get a list of all actions
+        # Get a list of all actions for this current state
         actions = gameState.getLegalActions(agentIndex)
         
         for action in actions:
-            # Get the successor state...
-            # Check the next agent
+            # Get next agent and depth level
             nextAgent = (agentIndex + 1) % totalAgents
             # Is the next agent pacman, then decrement the depth (we just cycled a branch)
             if(nextAgent == 0):
@@ -172,29 +172,20 @@ class MinimaxAgent(MultiAgentSearchAgent):
             else:
                 #Else the depth is unchanged
                 nextDepth = depth
-            #Check this next states value
+            #Check the state this move would create
             newState = gameState.generateSuccessor(agentIndex, action) #Current state, changed from nextAgent
+            # Based on the value of this state in context of its successors. (It calls from base up)
             v = max(v, self.value(newState, nextAgent, nextDepth))
         return v  
             
     def value(self, gameState, agentIndex, depth):
         # Terminal case
         if(gameState.isWin() or gameState.isLose() or depth == 0):
+            # Return the final value after recursion hit
             return self.evaluationFunction(gameState)
-        
+        # Simple controller logic
         totalAgents = gameState.getNumAgents() 
 
-        '''
-        # Increment our agents.
-        if(agentIndex < totalAgents-1):  
-          agentIndex = agentIndex + 1
-    
-        # Decrement depth if needed # This is where the problem lies...
-        if(agentIndex == totalAgents-1):
-            # Reset once all ghosts have been checked
-            agentIndex = 0
-            depth = depth - 1
-        '''  
         if(agentIndex > 0):
             #Min
             return self.minvalue(gameState, agentIndex, depth)
@@ -220,7 +211,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-
+        # Check terminal case
         if(gameState.isWin() or gameState.isLose() or self.depth == 0):
             return self.evaluationFunction(gameState)
       
@@ -232,20 +223,22 @@ class MinimaxAgent(MultiAgentSearchAgent):
         depth = self.depth
         # Get a list of all actions
         actions = gameState.getLegalActions(agentIndex)
-        
+        # Starting a negative infinity to find true max...
         max_val = float('-inf')
-        bestAction = actions[0] #Initialize initial
+        bestAction = actions[0] 
+        # Analyse all possible actions
+        # And for each action
         for action in actions:
-            # Get the successor state...
+            # Get the state this action would generate
             nextState = gameState.generateSuccessor(agentIndex, action)
-            # Get next agents and appropriate deoth
+            # Then locate the next agent in the module i.e 0..1..2..0..1..2(for total agents 3)
             nextAgent = (0 + 1) % totalAgents   # → ghost #1 
-
+            # If the next agent is pacman again, then decrease our dept.
             if(nextAgent == 0):
                 nextDepth = depth - 1
             else:
                 nextDepth = depth 
-          
+          # Get value of the state, with it's appropriate agent and depth level. I.E what state this action would generate, in context of the value of the ghosts moves too
             v = self.value(nextState, nextAgent, nextDepth)
             if(v > max_val):
                 max_val = v
