@@ -141,8 +141,17 @@ class MinimaxAgent(MultiAgentSearchAgent):
         
         for action in actions:
             # Get the successor state...
-            newState = gameState.generateSuccessor(agentIndex, action)
-            v = min(v, self.value(newState, agentIndex, depth))
+            # Check the next agent
+            nextAgent = (agentIndex + 1) % totalAgents
+            # Is the next agent pacman, then decrement the depth (we just cycled a branch)
+            if(nextAgent == 0):
+                nextDepth = depth - 1
+            else:
+                #Else the depth is unchanged
+                nextDepth = depth
+            #Check this next states value
+            newState = gameState.generateSuccessor(nextAgent, action)
+            v = min(v, self.value(newState, nextAgent, nextDepth))
         return v 
     
     def maxvalue(self, gameState, agentIndex, depth):
@@ -155,9 +164,18 @@ class MinimaxAgent(MultiAgentSearchAgent):
         
         for action in actions:
             # Get the successor state...
-            newState = gameState.generateSuccessor(agentIndex, action)
-            v = max(v, self.value(newState, agentIndex, depth))
-        return v 
+            # Check the next agent
+            nextAgent = (agentIndex + 1) % totalAgents
+            # Is the next agent pacman, then decrement the depth (we just cycled a branch)
+            if(nextAgent == 0):
+                nextDepth = depth - 1
+            else:
+                #Else the depth is unchanged
+                nextDepth = depth
+            #Check this next states value
+            newState = gameState.generateSuccessor(nextAgent, action)
+            v = max(v, self.value(newState, nextAgent, nextDepth))
+        return v  
             
     def value(self, gameState, agentIndex, depth):
         # Terminal case
@@ -166,6 +184,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         
         totalAgents = gameState.getNumAgents() 
 
+        '''
         # Increment our agents.
         if(agentIndex < totalAgents-1):  
           agentIndex = agentIndex + 1
@@ -175,16 +194,14 @@ class MinimaxAgent(MultiAgentSearchAgent):
             # Reset once all ghosts have been checked
             agentIndex = 0
             depth = depth - 1
-        
+        '''  
         if(agentIndex > 0):
             #Min
             return self.minvalue(gameState, agentIndex, depth)
         if(agentIndex == 0):
             #Max
             return self.maxvalue(gameState, agentIndex, depth)
-        
-        
-    
+            
     def getAction(self, gameState):
         """
           Returns the minimax action from the current gameState using self.depth
