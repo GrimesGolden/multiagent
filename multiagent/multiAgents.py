@@ -150,7 +150,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 #Else the depth is unchanged
                 nextDepth = depth
             #Check this next states value
-            newState = gameState.generateSuccessor(nextAgent, action)
+            newState = gameState.generateSuccessor(agentIndex, action) #Current state, changed from nextAgent
             v = min(v, self.value(newState, nextAgent, nextDepth))
         return v 
     
@@ -173,7 +173,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 #Else the depth is unchanged
                 nextDepth = depth
             #Check this next states value
-            newState = gameState.generateSuccessor(nextAgent, action)
+            newState = gameState.generateSuccessor(agentIndex, action) #Current state, changed from nextAgent
             v = max(v, self.value(newState, nextAgent, nextDepth))
         return v  
             
@@ -238,7 +238,15 @@ class MinimaxAgent(MultiAgentSearchAgent):
         for action in actions:
             # Get the successor state...
             nextState = gameState.generateSuccessor(agentIndex, action)
-            v = self.value(nextState, agentIndex, depth)
+            # Get next agents and appropriate deoth
+            nextAgent = (0 + 1) % totalAgents   # → ghost #1 
+
+            if(nextAgent == 0):
+                nextDepth = depth - 1
+            else:
+                nextDepth = depth 
+          
+            v = self.value(nextState, nextAgent, nextDepth)
             if(v > max_val):
                 max_val = v
                 bestAction = action
