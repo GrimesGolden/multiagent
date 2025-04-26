@@ -88,9 +88,9 @@ class ReflexAgent(Agent):
         # Combine ghost position and scared time into blocks of (state, time) as (ghost, scaredTime)
         for ghost, scaredTime in zip(newGhostStates, newScaredTimes):
           dist = manhattanDistance(newPos, ghost.getPosition())
-        if scaredTime == 0 and dist < 2:  # If ghosts are not scared, avoid them
+          if scaredTime == 0 and dist < 2:  # If ghosts are not scared, avoid them
             ghostPenalty += 10
-        elif scaredTime > 0:  # If ghosts are scared, go after them
+          elif scaredTime > 0:  # If ghosts are scared, go after them
             ghostPenalty -= 10
 
         # Combine all aspects and return the evaluation value
@@ -249,16 +249,72 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
-      Your minimax agent with alpha-beta pruning (question 3)
+    Your minimax agent with alpha-beta pruning (question 3)
     """
 
     def getAction(self, gameState):
         """
-          Returns the minimax action using self.depth and self.evaluationFunction
+        Returns the minimax action using self.depth and self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def max_value(state, depth, agentIndex, alpha, beta):
+            if state.isWin() or state.isLose() or depth == self.depth:
+                return self.evaluationFunction(state)
+            
+            v = -float('inf')
+            actions = state.getLegalActions(agentIndex)
+            for action in actions:
+                successor = state.generateSuccessor(agentIndex, action)
+                # Only increment depth after all agents have moved (agentIndex wraps around)
+                nextAgent = (agentIndex + 1) % state.getNumAgents()
+                nextDepth = depth + 1 if nextAgent == 0 else depth
+                v = max(v, value(successor, nextDepth, nextAgent, alpha, beta))
+                if v > beta:
+                    return v
+                alpha = max(alpha, v)
+            return v
 
+        def min_value(state, depth, agentIndex, alpha, beta):
+            if state.isWin() or state.isLose() or depth == self.depth:
+                return self.evaluationFunction(state)
+            
+            v = float('inf')
+            actions = state.getLegalActions(agentIndex)
+            for action in actions:
+                successor = state.generateSuccessor(agentIndex, action)
+                # Only increment depth after all agents have moved (agentIndex wraps around)
+                nextAgent = (agentIndex + 1) % state.getNumAgents()
+                nextDepth = depth + 1 if nextAgent == 0 else depth
+                v = min(v, value(successor, nextDepth, nextAgent, alpha, beta))
+                if v < alpha:
+                    return v
+                beta = min(beta, v)
+            return v
+
+        def value(state, depth, agentIndex, alpha, beta):
+            if state.isWin() or state.isLose() or depth == self.depth:
+                return self.evaluationFunction(state)
+            
+            if agentIndex == 0:  # Pacman's turn - maximize
+                return max_value(state, depth, agentIndex, alpha, beta)
+            else:  # Ghost's turn - minimize
+                return min_value(state, depth, agentIndex, alpha, beta)
+
+        # Initial call for Pacman (agent 0) at depth 0
+        best_score = -float('inf')
+        alpha = -float('inf')
+        beta = float('inf')
+        best_action = Directions.STOP
+        
+        for action in gameState.getLegalActions(0):
+            successor = gameState.generateSuccessor(0, action)
+            score = value(successor, 0, 1, alpha, beta)  # Next agent is 1 (first ghost)
+            if score > best_score:
+                best_score = score
+                best_action = action
+            alpha = max(alpha, best_score)
+            
+        return best_action
+    
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
       Your expectimax agent (question 4)
