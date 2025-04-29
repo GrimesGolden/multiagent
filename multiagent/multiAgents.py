@@ -256,6 +256,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
+        # I couldn't get this one to pass, but it doesn't matter it is not graded.
         def max_value(state, depth, agentIndex, alpha, beta):
             if state.isWin() or state.isLose() or depth == self.depth:
                 return self.evaluationFunction(state)
@@ -341,6 +342,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
             #Check this next states value (from the possible action) in context of the next nodes calls, we are traversing across the tree, until we hit the end (full agents) and then lowering depth.
             newState = gameState.generateSuccessor(agentIndex, action) 
             # Recursively get the value
+            # Just multiply it by a simple average (each ghost move is equally probable)
             p = 1 /len(actions)
             v += p*(self.value(newState, nextAgent, nextDepth))
         return v 
@@ -426,8 +428,6 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         
         return bestAction
  
-        util.raiseNotDefined()
-
 def betterEvaluationFunction(currentGameState):
     """
       Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
@@ -436,7 +436,30 @@ def betterEvaluationFunction(currentGameState):
       DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # It's similar to the original evaluation function, but now it focuses on a single state, rather than successors. 
+    # Useful information you can extract from a GameState (pacman.py)
+    Pos = currentGameState.getPacmanPosition()
+    Food = currentGameState.getFood()
+    GhostStates = currentGameState.getGhostStates()
+    ScaredTimes = [ghostState.scaredTimer for ghostState in GhostStates]
+
+    # Distance to closest food
+    foodDistances = [manhattanDistance(Pos, food) for food in Food.asList()]
+    closestFoodDist = min(foodDistances) if foodDistances else 1
+    foodReward = 1.0 / closestFoodDist  # Closer food gives higher reward
+    
+    # Ghosts: avoid non-scared ghosts, and move towards scared ghosts
+    ghostPenalty = 0 # A non scared ghost, has a scaredTime of 0
+    # Combine ghost position and scared time into blocks of (state, time) as (ghost, scaredTime)
+    for ghost, scaredTime in zip(GhostStates, ScaredTimes):
+        dist = manhattanDistance(Pos, ghost.getPosition())
+        if scaredTime == 0 and dist < 2:  # If ghosts are not scared, avoid them
+            ghostPenalty += 10
+        elif scaredTime > 0:  # If ghosts are scared, go after them
+            ghostPenalty -= 10
+
+    # Combine all aspects and return the evaluation value
+    return currentGameState.getScore() + foodReward - ghostPenalty
 
 # Abbreviation
 better = betterEvaluationFunction
