@@ -319,7 +319,70 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
     """
       Your expectimax agent (question 4)
     """
+    def expvalue(self, gameState, agentIndex, depth):
+        #minval
+        #Initialize zero
+        v = 0
+        totalAgents = gameState.getNumAgents()
+        # Get a list of all actions (for this state and current agent)
+        actions = gameState.getLegalActions(agentIndex)
+        
+        for action in actions:
+            # Get the state this action would generate
+            # Alongside the agents and depth as appropriate for this next layer
+            # Check the next agent
+            nextAgent = (agentIndex + 1) % totalAgents
+            # Is the next agent pacman, then decrement the depth (we just cycled a branch)
+            if(nextAgent == 0):
+                nextDepth = depth - 1
+            else:
+                #Else the depth is unchanged
+                nextDepth = depth
+            #Check this next states value (from the possible action) in context of the next nodes calls, we are traversing across the tree, until we hit the end (full agents) and then lowering depth.
+            newState = gameState.generateSuccessor(agentIndex, action) 
+            # Recursively get the value
+            p = 1 /len(actions)
+            v += p*(self.value(newState, nextAgent, nextDepth))
+        return v 
+    
+    def maxvalue(self, gameState, agentIndex, depth):
+        #maxval
+        #Initialize infinity
+        v = float('-inf')
+        totalAgents = gameState.getNumAgents()
+        # Get a list of all actions for this current state
+        actions = gameState.getLegalActions(agentIndex)
+        
+        for action in actions:
+            # Get next agent and depth level
+            nextAgent = (agentIndex + 1) % totalAgents
+            # Is the next agent pacman, then decrement the depth (we just cycled a branch)
+            if(nextAgent == 0):
+                nextDepth = depth - 1
+            else:
+                #Else the depth is unchanged
+                nextDepth = depth
+            #Check the state this move would create
+            newState = gameState.generateSuccessor(agentIndex, action) #Current state, changed from nextAgent
+            # Based on the value of this state in context of its successors. (It calls from base up)
+            v = max(v, self.value(newState, nextAgent, nextDepth))
+        return v  
 
+    def value(self, gameState, agentIndex, depth):
+        # Terminal case
+        if(gameState.isWin() or gameState.isLose() or depth == 0):
+            # Return the final value after recursion hit
+            return self.evaluationFunction(gameState)
+        # Simple controller logic
+        totalAgents = gameState.getNumAgents() 
+
+        if(agentIndex > 0):
+            #Return exp value
+            return self.expvalue(gameState, agentIndex, depth)
+        if(agentIndex == 0):
+            #Max
+            return self.maxvalue(gameState, agentIndex, depth)
+        
     def getAction(self, gameState):
         """
           Returns the expectimax action using self.depth and self.evaluationFunction
@@ -328,6 +391,41 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
+         # Check terminal case
+        if(gameState.isWin() or gameState.isLose() or self.depth == 0):
+            return self.evaluationFunction(gameState)
+      
+        # Get the total number of agents 
+        totalAgents = gameState.getNumAgents() 
+        # Starting out, we are pacman, index(0)
+        agentIndex = self.index
+        # Get depth
+        depth = self.depth
+        # Get a list of all actions
+        actions = gameState.getLegalActions(agentIndex)
+        # Starting a negative infinity to find true max...
+        max_val = float('-inf')
+        bestAction = actions[0] 
+        # Analyse all possible actions
+        # And for each action
+        for action in actions:
+            # Get the state this action would generate
+            nextState = gameState.generateSuccessor(agentIndex, action)
+            # Then locate the next agent in the module i.e 0..1..2..0..1..2(for total agents 3)
+            nextAgent = (0 + 1) % totalAgents   # → ghost #1 
+            # If the next agent is pacman again, then decrease our dept.
+            if(nextAgent == 0):
+                nextDepth = depth - 1
+            else:
+                nextDepth = depth 
+          # Get value of the state, with it's appropriate agent and depth level. I.E what state this action would generate, in context of the value of the ghosts moves too
+            v = self.value(nextState, nextAgent, nextDepth)
+            if(v > max_val):
+                max_val = v
+                bestAction = action
+        
+        return bestAction
+ 
         util.raiseNotDefined()
 
 def betterEvaluationFunction(currentGameState):
